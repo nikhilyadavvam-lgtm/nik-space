@@ -1,0 +1,386 @@
+APP Name - NIK SPACE
+---
+
+# 🧠 1. OVERALL SYSTEM ARCHITECTURE
+
+Think of your app like 3 layers:
+
+```text
+📱 Frontend (React Native)
+        ↓
+🧠 Backend (Node.js + Express)
+        ↓
+🗄️ Database (MongoDB Atlas)
+```
+
+### Extra Engines:
+
+```text
+🔐 Encryption Layer (AES-256)
+🤖 AI Layer (Controlled + Safe)
+📍 Location Engine
+☁️ Backup System
+```
+
+---
+
+# 🔐 2. SECURITY-FIRST DESIGN (VERY IMPORTANT)
+
+## 🧱 Rule: “Nothing sensitive leaves your system”
+
+---
+
+## 🔒 Data Classification (Core Concept)
+
+| Data Type | Storage   | AI Allowed? |
+| --------- | --------- | ----------- |
+| Notes     | Encrypted | ✅ Yes       |
+| Chats     | Encrypted | ⚠️ Limited  |
+| Tasks     | Encrypted | ❌ No need   |
+| Vault     | Encrypted | ❌ Never     |
+| Finance   | Encrypted | ❌ Never     |
+| Projects  | Encrypted | ⚠️ Partial  |
+
+---
+
+## 🔑 Encryption Flow
+
+```text
+User Input → Encrypt (Frontend) → Send → Store in DB
+Read → Fetch → Decrypt → Show
+```
+
+👉 Use:
+
+* AES-256
+* Key derived from Master Password
+
+---
+
+## 🔐 Double Lock Logic
+
+When user opens:
+
+* Vault
+* Finance
+* Project credentials
+
+👉 Trigger:
+
+* Fingerprint again
+
+---
+
+# 🤖 3. AI INTEGRATION PLAN (SAFE VERSION)
+
+## 🎯 Goal
+
+Use AI **without leaking private data**
+
+---
+
+## 🧠 AI Usage Areas
+
+| Feature  | AI Role           |
+| -------- | ----------------- |
+| Notes    | Summarize, search |
+| Projects | Suggest features  |
+| Chat     | Idea generation   |
+
+---
+
+## ❌ Block AI For
+
+* Vault (passwords)
+* Finance
+* Credentials
+
+---
+
+## 🧠 AI Flow
+
+```text
+User Note → Check sensitivity
+        ↓
+If safe → Send to AI API
+If sensitive → Skip AI
+```
+
+---
+
+## 🛡️ Safety Filter (Important)
+
+Before sending to AI:
+
+```js
+function isSensitive(text) {
+  return text.includes("password") ||
+         text.includes("bank") ||
+         text.includes("upi");
+}
+```
+
+👉 If true → DO NOT send
+
+---
+
+## ⚙️ AI Modes
+
+| Mode     | Use                       |
+| -------- | ------------------------- |
+| Basic    | API (free via OpenRouter) |
+| Advanced | Local AI (Ollama)         |
+
+---
+
+# 🔍 4. SMART SEARCH (FINAL PLAN)
+
+## Hybrid Approach
+
+```text
+1. MongoDB Text Search (Primary)
+2. AI Search (Optional, Notes only)
+3. Merge results
+```
+
+---
+
+## Secure Rule
+
+* Vault → only title search
+* Finance → no AI search
+
+---
+
+# ☁️ 5. BACKUP & RESTORE PLAN
+
+## 🔐 Secure Backup Flow
+
+```text
+Data → Encrypt → Upload → MongoDB
+Restore → Download → Decrypt
+```
+
+---
+
+## Features
+
+* Manual backup button
+* Restore anytime
+* Future: auto sync
+
+---
+
+# 📍 6. CONTEXT-AWARE REMINDERS PLAN
+
+## 🔧 Logic
+
+```text
+Every 5 min:
+   Get location
+   Check distance
+   Check time
+   If match → Notify
+```
+
+---
+
+## Conditions
+
+| Type     | Example            |
+| -------- | ------------------ |
+| Location | Near shop          |
+| Time     | 6 PM               |
+| Combined | Near hostel + 7 PM |
+
+---
+
+## Optimization
+
+* Use radius (100–300m)
+* Reduce battery usage
+
+---
+
+# 🧑‍💻 7. MODULE-WISE BUILD PLAN
+
+---
+
+## 🟢 PHASE 1 (MVP – START HERE)
+
+| Module     | Features             |
+| ---------- | -------------------- |
+| Auth       | Login + biometric    |
+| Notes      | Create, edit, delete |
+| Chat       | Self chat            |
+| Encryption | Basic AES            |
+
+---
+
+## 🟡 PHASE 2
+
+| Module    | Features        |
+| --------- | --------------- |
+| Kanban    | Task board      |
+| Reminders | Basic alerts    |
+| Projects  | Basic structure |
+
+---
+
+## 🔵 PHASE 3
+
+| Module  | Features         |
+| ------- | ---------------- |
+| Vault   | Password manager |
+| Finance | Expense tracker  |
+| Backup  | Manual backup    |
+
+---
+
+## 🔴 PHASE 4
+
+| Module    | Features               |
+| --------- | ---------------------- |
+| AI        | Summarization + search |
+| Location  | Smart reminders        |
+| Analytics | Dashboard              |
+
+---
+
+# 🎨 8. UI / UX PLAN (VERY CLEAR)
+
+## 🏠 Home Screen (Grid Layout)
+
+```
+[ 🚀 Projects ]   [ 🔑 Vault ]
+[ 📊 Finance ]    [ 📝 Notes ]
+[ 💬 Chat ]       [ 📋 Kanban ]
+[ 🍽️ Mess ]       [ 🔔 Reminders ]
+```
+
+---
+
+## 🔍 Global Search Bar (Top)
+
+👉 Searches across all modules
+
+---
+
+## 📄 Notes Screen
+
+* List view
+* Floating “+” button
+* Markdown editor
+
+---
+
+## 💬 Chat Screen
+
+* WhatsApp style UI
+* Thread list
+* Chat bubbles
+
+---
+
+## 📋 Kanban Screen
+
+* Columns:
+
+  * To Do
+  * In Progress
+  * Done
+
+---
+
+## 🔑 Vault Screen
+
+* Hidden values
+* Tap → biometric → show
+
+---
+
+## 📊 Finance Screen
+
+* Charts
+* Expense list
+* Add entry button
+
+---
+
+## 🚀 Project Screen
+
+* Project cards
+* Inside:
+
+  * Notes
+  * Tasks
+  * Credentials
+
+---
+
+## 🔔 Reminder Screen
+
+* List + calendar view
+* Toggle on/off
+
+---
+
+# 🧠 9. DATABASE DESIGN (HIGH LEVEL)
+
+Collections:
+
+```text
+users
+notes
+chats
+tasks
+projects
+vault
+finance
+reminders
+```
+
+👉 All fields encrypted except metadata
+
+---
+
+# ⚡ 10. FINAL STRATEGY (IMPORTANT)
+
+## ❌ Don’t do this
+
+* Build all features at once
+* Add AI everywhere
+
+## ✅ Do this
+
+* Build core first
+* Add AI slowly
+* Keep security strict
+
+---
+
+# 🧠 FINAL UNDERSTANDING
+
+Your system becomes:
+
+👉 **Private AI-powered life manager**
+
+With:
+
+* 🔐 Military-level privacy
+* 🤖 Controlled AI
+* 📊 Full life tracking
+
+---
+
+# 🚀 NEXT STEP
+
+If you’re serious about building:
+
+I can now give you:
+
+✅ Exact **React Native folder structure**
+✅ Full **MongoDB schema (with encryption fields)**
+✅ Step-by-step **Day 1 → Day 7 build plan**
+
+Tell me what you want next 👍
