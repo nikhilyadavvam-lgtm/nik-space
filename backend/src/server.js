@@ -11,7 +11,9 @@ const routes = require('./routes');
 validateEnv();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000;
+
+app.set('trust proxy', 1); 
 
 // ── Inline NoSQL injection sanitizer ──
 function sanitize(obj) {
@@ -35,6 +37,11 @@ app.use((req, res, next) => {
   next();
 });
 
+
+app.get('/', (req, res) => {
+  res.json({ message: 'Welcome to NIK SPACE backend' });
+
+});
 // ── Routes ──
 app.use('/api', routes);
 
