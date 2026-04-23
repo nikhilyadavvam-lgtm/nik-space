@@ -5,6 +5,7 @@ exports.getExpenses = async (req, res) => {
     const expenses = await Finance.find({ userId: req.userId }).sort({ date: -1 });
     res.json({ expenses });
   } catch (error) {
+    console.error('Fetch Expenses Error:', error);
     res.status(500).json({ error: 'Server error fetching expenses' });
   }
 };
@@ -25,7 +26,11 @@ exports.createExpense = async (req, res) => {
     await expense.save();
     res.status(201).json({ expense });
   } catch (error) {
-    res.status(500).json({ error: 'Server error creating expense' });
+    console.error('Expense Creation Error:', error);
+    res.status(500).json({ 
+      error: 'Server error creating expense',
+      message: error.message 
+    });
   }
 };
 
