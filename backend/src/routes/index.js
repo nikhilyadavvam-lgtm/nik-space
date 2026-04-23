@@ -13,6 +13,8 @@ const docsRoutes = require('./docs');
 const financeRoutes = require('./finance');
 const messRoutes = require('./mess');
 const healthRoutes = require('./health');
+const adminRoutes = require('./admin');
+const jankariRoutes = require('./jankari');
 
 const router = Router();
 
@@ -30,5 +32,7 @@ router.use('/docs', apiLimiter, requireAuth, docsRoutes);
 router.use('/finance', apiLimiter, requireAuth, financeRoutes);
 router.use('/mess', apiLimiter, requireAuth, messRoutes);
 router.use('/health', apiLimiter, requireAuth, healthRoutes);
+router.use('/admin', apiLimiter, requireAuth, adminRoutes);
+router.use('/jankari', apiLimiter, requireAuth, jankariRoutes);
 
 module.exports = router;
