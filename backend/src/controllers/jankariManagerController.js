@@ -129,3 +129,23 @@ exports.assignEmail = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// ── User Directory ──────────────────────────────────────
+exports.getUsers = async (req, res) => {
+  try {
+    const users = await User.find({}).sort({ createdAt: -1 }).select('-password');
+    res.json({ success: true, data: users });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ── Genesis Logs (Recent Tags) ──────────────────────────
+exports.getRecentTags = async (req, res) => {
+  try {
+    const tags = await Qrinfo.find({}).sort({ createdAt: -1 }).limit(50);
+    res.json({ success: true, data: tags });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
