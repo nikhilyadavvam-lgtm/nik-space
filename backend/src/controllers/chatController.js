@@ -1,5 +1,15 @@
 const Chat = require('../models/Chat');
 
+const IMAGE_CONTENT_PREFIX = '[Image]: ';
+
+function stripImageFallback(content = '') {
+  return content
+    .split('\n')
+    .filter((line) => !line.startsWith(IMAGE_CONTENT_PREFIX))
+    .join('\n')
+    .trim();
+}
+
 // GET /api/chats — list all threads (without full messages)
 async function getChats(req, res) {
   try {
@@ -62,13 +72,15 @@ async function addMessage(req, res) {
     const chat = await Chat.findOne({ _id: req.params.id, userId: req.userId });
     if (!chat) return res.status(404).json({ error: 'Chat not found' });
 
-    chat.messages.push({ role, content, imageUrl });
+    const cleanContent = stripImageFallback(content);
+    const messageContent = cleanContent || (imageUrl ? '[Image]' : '');
+    chat.messages.push({ role, content: messageContent, imageUrl });
     chat.updatedAt = new Date();
 
     // Auto-title from first user message
     if (chat.messages.length === 1 && role === 'user') {
       // Use first 50 chars of the message as title
-      chat.title = content.substring(0, 50) + (content.length > 50 ? '...' : '');
+      chat.title = messageContent.substring(0, 50) + (messageContent.length > 50 ? '...' : '');
     }
 
     await chat.save();

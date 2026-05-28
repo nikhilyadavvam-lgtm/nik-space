@@ -19,7 +19,16 @@ const updateChatSchema = z.object({
 
 const addMessageSchema = z.object({
   role: z.enum(['user', 'assistant']),
-  content: z.string().min(1, 'Content is required'),
+  content: z.string().optional().default(''),
+  imageUrl: z.string().url().nullable().optional(),
+}).superRefine((data, ctx) => {
+  if (!data.content.trim() && !data.imageUrl) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['content'],
+      message: 'Content or image is required',
+    });
+  }
 });
 
 router.get('/',             getChats);
