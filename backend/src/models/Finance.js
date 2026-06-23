@@ -11,6 +11,11 @@ const financeSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  entryType: {
+    type: String,
+    enum: ['income', 'expense'],
+    default: 'expense',
+  },
   category: {
     type: String,
     required: true,

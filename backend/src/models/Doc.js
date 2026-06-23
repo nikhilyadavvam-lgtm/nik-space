@@ -20,6 +20,15 @@ const docSchema = new mongoose.Schema({
     enum: ['document', 'personal', 'partner', 'other'],
     default: 'document',
   },
+  encrypted: {
+    type: Boolean,
+    default: false,
+  },
+  storage: {
+    type: String,
+    enum: ['cloudinary', 'r2'],
+    default: 'cloudinary',
+  },
   createdAt: {
     type: Date,
     default: Date.now,

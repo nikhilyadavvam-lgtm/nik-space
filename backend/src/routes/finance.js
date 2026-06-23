@@ -9,6 +9,7 @@ const createExpenseSchema = z.object({
   amount: z.number().positive(),
   category: z.string().min(1),
   title: z.string().min(1),
+  entryType: z.enum(['income', 'expense']).optional().default('expense'),
   note: z.string().optional(),
   spentOn: z.string().optional(),
   description: z.string().optional(), // backward compatibility

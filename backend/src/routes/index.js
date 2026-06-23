@@ -15,6 +15,8 @@ const messRoutes = require('./mess');
 const healthRoutes = require('./health');
 const adminRoutes = require('./admin');
 const jankariRoutes = require('./jankari');
+const usersRoutes = require('./users');
+const telemetryRoutes = require('./telemetry');
 
 const router = Router();
 
@@ -34,5 +36,7 @@ router.use('/mess', apiLimiter, requireAuth, messRoutes);
 router.use('/health', apiLimiter, requireAuth, healthRoutes);
 router.use('/admin', apiLimiter, requireAuth, adminRoutes);
 router.use('/jankari', apiLimiter, requireAuth, jankariRoutes);
+router.use('/users', apiLimiter, requireAuth, usersRoutes);
+router.use('/telemetry', apiLimiter, requireAuth, telemetryRoutes);
 
 module.exports = router;

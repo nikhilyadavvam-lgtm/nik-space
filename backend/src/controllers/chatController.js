@@ -77,8 +77,8 @@ async function addMessage(req, res) {
     chat.messages.push({ role, content: messageContent, imageUrl });
     chat.updatedAt = new Date();
 
-    // Auto-title from first user message
-    if (chat.messages.length === 1 && role === 'user') {
+    // Auto-title from first user message only if it still has the default title
+    if (chat.messages.length === 1 && role === 'user' && chat.title === 'New Chat') {
       // Use first 50 chars of the message as title
       chat.title = messageContent.substring(0, 50) + (messageContent.length > 50 ? '...' : '');
     }
@@ -160,4 +160,41 @@ async function deleteMessage(req, res) {
   }
 }
 
-module.exports = { getChats, getChat, createChat, addMessage, deleteChat, updateChat, updateMessage, deleteMessage };
+// PUT /api/chats/:id/messages/:messageId/react
+async function toggleReaction(req, res) {
+  try {
+    const { emoji } = req.body;
+    const userId = req.userId;
+    const chat = await Chat.findOne({ _id: req.params.id, userId: req.userId });
+    if (!chat) return res.status(404).json({ error: 'Chat not found' });
+
+    const message = chat.messages.id(req.params.messageId);
+    if (!message) return res.status(404).json({ error: 'Message not found' });
+
+    if (!message.reactions) {
+      message.reactions = [];
+    }
+
+    const existingIndex = message.reactions.findIndex(
+      (r) => r.userId.toString() === userId.toString()
+    );
+
+    if (existingIndex > -1) {
+      if (message.reactions[existingIndex].emoji === emoji) {
+        message.reactions.splice(existingIndex, 1);
+      } else {
+        message.reactions[existingIndex].emoji = emoji;
+      }
+    } else {
+      message.reactions.push({ emoji, userId });
+    }
+
+    await chat.save();
+    res.json(chat);
+  } catch (err) {
+    console.error('Toggle reaction error:', err);
+    res.status(500).json({ error: 'Failed to toggle reaction' });
+  }
+}
+
+module.exports = { getChats, getChat, createChat, addMessage, deleteChat, updateChat, updateMessage, deleteMessage, toggleReaction };

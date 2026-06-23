@@ -12,13 +12,14 @@ exports.getExpenses = async (req, res) => {
 
 exports.createExpense = async (req, res) => {
   try {
-    const { amount, category, title, note, spentOn } = req.body;
+    const { amount, category, title, note, spentOn, entryType } = req.body;
     const expense = new Finance({
       userId: req.userId,
       amount,
       category,
       title,
       note,
+      entryType: entryType || 'expense',
       spentOn: spentOn || new Date(),
       description: note, // For backward compatibility
       date: spentOn || new Date(), // For backward compatibility

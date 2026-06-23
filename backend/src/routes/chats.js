@@ -2,7 +2,7 @@ const { Router } = require('express');
 const { z } = require('zod');
 const { validate } = require('../middleware/validate');
 const {
-  getChats, getChat, createChat, addMessage, deleteChat, updateChat, updateMessage, deleteMessage
+  getChats, getChat, createChat, addMessage, deleteChat, updateChat, updateMessage, deleteMessage, toggleReaction
 } = require('../controllers/chatController');
 
 const router = Router();
@@ -37,6 +37,7 @@ router.post('/',            validate(createChatSchema), createChat);
 router.put('/:id',          validate(updateChatSchema), updateChat);
 router.post('/:id/messages', validate(addMessageSchema), addMessage);
 router.put('/:id/messages/:messageId', updateMessage);
+router.put('/:id/messages/:messageId/react', toggleReaction);
 router.delete('/:id/messages/:messageId', deleteMessage);
 router.delete('/:id',       deleteChat);
 

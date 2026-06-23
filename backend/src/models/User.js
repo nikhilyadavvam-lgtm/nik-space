@@ -21,6 +21,15 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: '⚡',
   },
+  role: {
+    type: String,
+    enum: ['admin', 'user'],
+    default: 'user',
+  },
+  authorizedModules: {
+    type: [String],
+    default: ['notes', 'chat', 'tasks', 'finance', 'vault', 'drive', 'reminders', 'health', 'mess', 'quotes'],
+  },
   createdAt: {
     type: Date,
     default: Date.now,

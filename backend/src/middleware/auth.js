@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
 function requireAuth(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -17,4 +18,16 @@ function requireAuth(req, res, next) {
   }
 }
 
-module.exports = { requireAuth };
+async function requireAdmin(req, res, next) {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ error: 'Access denied: Admin role required' });
+    }
+    next();
+  } catch (err) {
+    return res.status(500).json({ error: 'Server error in admin authentication' });
+  }
+}
+
+module.exports = { requireAuth, requireAdmin };
