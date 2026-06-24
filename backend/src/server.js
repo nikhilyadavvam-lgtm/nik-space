@@ -32,7 +32,7 @@ function sanitize(obj) {
 // ── Security middleware ──
 app.use(helmet());
 app.use(cors({ origin: true, credentials: true }));
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '50mb' }));
 app.use((req, res, next) => {
   if (req.body) sanitize(req.body);
   next();
