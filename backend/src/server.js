@@ -12,7 +12,7 @@ const routes = require('./routes');
 validateEnv();
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 5000;
 
 app.set('trust proxy', 1); 
 
@@ -68,6 +68,8 @@ const io = new Server(server, {
   },
 });
 
+app.set('io', io);
+
 // Map of online userIds -> { socketId, name, emoji }
 const onlineUsers = new Map();
 
@@ -87,6 +89,7 @@ io.use((socket, next) => {
 
 io.on('connection', async (socket) => {
   console.log(`🔌 WebRTC: User connected ${socket.userId} on socket ${socket.id}`);
+  socket.join(`user:${socket.userId}`);
 
   try {
     const user = await User.findById(socket.userId);
@@ -202,3 +205,4 @@ connectDB().then(() => {
     console.log(`🚀 NIK SPACE backend running on http://0.0.0.0:${PORT}`);
   });
 });
+

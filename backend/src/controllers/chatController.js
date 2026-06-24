@@ -11,6 +11,18 @@ function stripImageFallback(content = '') {
     .trim();
 }
 
+function emitChatUpdated(req, userId, chat, reason = 'updated') {
+  const io = req.app.get('io');
+  if (!io || !userId || !chat) return;
+  io.to(`user:${userId.toString()}`).emit('chat:updated', { chat, reason });
+}
+
+function emitChatDeleted(req, userId, chatId) {
+  const io = req.app.get('io');
+  if (!io || !userId || !chatId) return;
+  io.to(`user:${userId.toString()}`).emit('chat:deleted', { chatId: chatId.toString() });
+}
+
 // GET /api/chats — list all threads (without full messages)
 async function getChats(req, res) {
   try {
@@ -59,6 +71,7 @@ async function createChat(req, res) {
       title: title || 'New Chat',
       messages: [],
     });
+    emitChatUpdated(req, req.userId, chat, 'created');
     res.status(201).json(chat);
   } catch (err) {
     console.error('Create chat error:', err);
@@ -85,6 +98,7 @@ async function addMessage(req, res) {
     }
 
     await chat.save();
+    emitChatUpdated(req, req.userId, chat, 'message-added');
 
     // Contact chat mirroring logic
     if (chat.title.startsWith('Chat with ')) {
@@ -112,6 +126,7 @@ async function addMessage(req, res) {
         });
         mirrorChat.updatedAt = new Date();
         await mirrorChat.save();
+        emitChatUpdated(req, recipient._id, mirrorChat, 'message-added');
       }
     }
 
@@ -127,6 +142,7 @@ async function deleteChat(req, res) {
   try {
     const chat = await Chat.findOneAndDelete({ _id: req.params.id, userId: req.userId });
     if (!chat) return res.status(404).json({ error: 'Chat not found' });
+    emitChatDeleted(req, req.userId, chat._id);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete chat' });
@@ -148,6 +164,7 @@ async function updateChat(req, res) {
       { new: true }
     );
     if (!chat) return res.status(404).json({ error: 'Chat not found' });
+    emitChatUpdated(req, req.userId, chat, 'updated');
     res.json(chat);
   } catch (err) {
     res.status(500).json({ error: 'Failed to update chat' });
@@ -167,6 +184,7 @@ async function updateMessage(req, res) {
     message.content = content;
     chat.updatedAt = new Date();
     await chat.save();
+    emitChatUpdated(req, req.userId, chat, 'message-updated');
     
     res.json(chat);
   } catch (err) {
@@ -184,6 +202,7 @@ async function deleteMessage(req, res) {
     chat.messages.pull({ _id: req.params.messageId });
     chat.updatedAt = new Date();
     await chat.save();
+    emitChatUpdated(req, req.userId, chat, 'message-deleted');
 
     res.json(chat);
   } catch (err) {
@@ -221,6 +240,7 @@ async function toggleReaction(req, res) {
     }
 
     await chat.save();
+    emitChatUpdated(req, req.userId, chat, 'reaction-updated');
     res.json(chat);
   } catch (err) {
     console.error('Toggle reaction error:', err);

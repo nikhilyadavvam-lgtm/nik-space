@@ -118,7 +118,7 @@ exports.createUser = async (req, res) => {
       passwordHash,
       name: name || '',
       role: role || 'user',
-      authorizedModules: authorizedModules || ['notes', 'chat', 'tasks', 'finance', 'vault', 'drive', 'reminders', 'health', 'mess', 'quotes']
+      authorizedModules: authorizedModules || ['notes', 'chat', 'tasks', 'finance', 'vault', 'drive', 'reminders', 'health', 'mess', 'quotes', 'calls', 'calendar']
     });
 
     const userObj = newUser.toObject();
