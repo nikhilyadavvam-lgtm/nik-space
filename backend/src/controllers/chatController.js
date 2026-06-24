@@ -1,4 +1,5 @@
 const Chat = require('../models/Chat');
+const User = require('../models/User');
 
 const IMAGE_CONTENT_PREFIX = '[Image]: ';
 
@@ -84,6 +85,36 @@ async function addMessage(req, res) {
     }
 
     await chat.save();
+
+    // Contact chat mirroring logic
+    if (chat.title.startsWith('Chat with ')) {
+      const recipientName = chat.title.replace('Chat with ', '').trim();
+      const sender = await User.findById(req.userId);
+      const recipient = await User.findOne({ name: recipientName });
+      
+      if (sender && recipient) {
+        const mirrorTitle = `Chat with ${sender.name}`;
+        let mirrorChat = await Chat.findOne({ userId: recipient._id, title: mirrorTitle });
+        
+        if (!mirrorChat) {
+          mirrorChat = new Chat({
+            userId: recipient._id,
+            title: mirrorTitle,
+            messages: []
+          });
+        }
+        
+        // Add the mirrored message so it shows on the left (as 'assistant' role)
+        mirrorChat.messages.push({
+          role: 'assistant',
+          content: messageContent,
+          imageUrl
+        });
+        mirrorChat.updatedAt = new Date();
+        await mirrorChat.save();
+      }
+    }
+
     res.status(201).json(chat);
   } catch (err) {
     console.error('Add message error:', err);

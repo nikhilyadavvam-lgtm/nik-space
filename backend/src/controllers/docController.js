@@ -70,20 +70,21 @@ function getR2Client() {
 
 exports.uploadR2 = async (req, res) => {
   try {
-    const { fileName, base64Data, contentType } = req.body;
-    if (!fileName || !base64Data) {
-      return res.status(400).json({ error: 'fileName and base64Data are required' });
+    const file = req.file;
+    const { fileName } = req.body;
+    
+    if (!file || !fileName) {
+      return res.status(400).json({ error: 'file and fileName are required' });
     }
 
     const bucketName = process.env.R2_BUCKET || 'nikspace';
-    const buffer = Buffer.from(base64Data, 'base64');
 
     const client = getR2Client();
     const command = new PutObjectCommand({
       Bucket: bucketName,
       Key: fileName,
-      Body: buffer,
-      ContentType: contentType || 'application/octet-stream',
+      Body: file.buffer,
+      ContentType: file.mimetype || 'application/octet-stream',
     });
 
     await client.send(command);
