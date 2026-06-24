@@ -30,4 +30,25 @@ async function requireAdmin(req, res, next) {
   }
 }
 
-module.exports = { requireAuth, requireAdmin };
+const requireModule = (moduleName) => async (req, res, next) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+    
+    // Admins bypass all module locks
+    const isAdmin = user.role === 'admin';
+    const hasAccess = isAdmin || (user.authorizedModules || []).includes(moduleName);
+    
+    if (!hasAccess) {
+      return res.status(403).json({ error: `Access denied: Module '${moduleName}' is not authorized for your account` });
+    }
+    
+    next();
+  } catch (err) {
+    return res.status(500).json({ error: 'Server error in module authentication' });
+  }
+};
+
+module.exports = { requireAuth, requireAdmin, requireModule };

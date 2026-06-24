@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, requireAdmin, requireModule } = require('../middleware/auth');
 const { apiLimiter } = require('../middleware/rateLimit');
 
 const authRoutes = require('./auth');
@@ -17,6 +17,7 @@ const adminRoutes = require('./admin');
 const jankariRoutes = require('./jankari');
 const usersRoutes = require('./users');
 const telemetryRoutes = require('./telemetry');
+const aiRoutes = require('./ai');
 
 const router = Router();
 
@@ -24,19 +25,20 @@ const router = Router();
 router.use('/auth', authRoutes);
 
 // Protected routes
-router.use('/notes', apiLimiter, requireAuth, notesRoutes);
-router.use('/chats', apiLimiter, requireAuth, chatsRoutes);
-router.use('/tasks', apiLimiter, requireAuth, tasksRoutes);
-router.use('/vault', apiLimiter, requireAuth, vaultRoutes);
-router.use('/quotes', apiLimiter, requireAuth, quotesRoutes);
-router.use('/search', apiLimiter, requireAuth, searchRoutes);
-router.use('/docs', apiLimiter, requireAuth, docsRoutes);
-router.use('/finance', apiLimiter, requireAuth, financeRoutes);
-router.use('/mess', apiLimiter, requireAuth, messRoutes);
-router.use('/health', apiLimiter, requireAuth, healthRoutes);
-router.use('/admin', apiLimiter, requireAuth, adminRoutes);
-router.use('/jankari', apiLimiter, requireAuth, jankariRoutes);
+router.use('/notes', apiLimiter, requireAuth, requireModule('notes'), notesRoutes);
+router.use('/chats', apiLimiter, requireAuth, requireModule('chat'), chatsRoutes);
+router.use('/tasks', apiLimiter, requireAuth, requireModule('tasks'), tasksRoutes);
+router.use('/vault', apiLimiter, requireAuth, requireModule('vault'), vaultRoutes);
+router.use('/quotes', apiLimiter, requireAuth, requireModule('quotes'), quotesRoutes);
+router.use('/search', apiLimiter, requireAuth, searchRoutes); // Inside search controller, we dynamically check modules
+router.use('/docs', apiLimiter, requireAuth, requireModule('drive'), docsRoutes);
+router.use('/finance', apiLimiter, requireAuth, requireModule('finance'), financeRoutes);
+router.use('/mess', apiLimiter, requireAuth, requireModule('mess'), messRoutes);
+router.use('/health', apiLimiter, requireAuth, requireModule('health'), healthRoutes);
+router.use('/admin', apiLimiter, requireAuth, requireAdmin, adminRoutes);
+router.use('/jankari', apiLimiter, requireAuth, requireAdmin, jankariRoutes);
 router.use('/users', apiLimiter, requireAuth, usersRoutes);
 router.use('/telemetry', apiLimiter, requireAuth, telemetryRoutes);
+router.use('/ai', apiLimiter, requireAuth, aiRoutes);
 
 module.exports = router;

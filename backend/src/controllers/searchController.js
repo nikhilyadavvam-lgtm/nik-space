@@ -1,8 +1,8 @@
-const Note = require('../models/Note');
+const NoteChannel = require('../models/NoteChannel');
 const Task = require('../models/Task');
 const Chat = require('../models/Chat');
 const Vault = require('../models/Vault');
-// const Reminder = require('../models/Reminder'); 
+const User = require('../models/User');
 
 // GET /api/search?q=query
 async function globalSearch(req, res) {
@@ -12,14 +12,34 @@ async function globalSearch(req, res) {
       return res.json({ notes: [], tasks: [], chats: [], vault: [] });
     }
 
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    const authorized = user.authorizedModules || [];
+    const isAdmin = user.role === 'admin';
+    const hasAccess = (mod) => isAdmin || authorized.includes(mod);
+
     const regex = new RegExp(q, 'i');
 
-    const [notes, tasks, chats, vault] = await Promise.all([
-      Note.find({ userId: req.userId, $or: [{ title: regex }, { content: regex }] }).select('title content updatedAt'),
-      Task.find({ userId: req.userId, title: regex }).select('title status dueDate'),
-      Chat.find({ userId: req.userId, $or: [{ title: regex }, { 'messages.content': regex }] }).select('title updatedAt messages'),
-      Vault.find({ userId: req.userId, accountName: regex }).select('accountName updatedAt')
-    ]);
+    // Run queries conditionally depending on user access
+    const searchPromises = [
+      hasAccess('notes') 
+        ? NoteChannel.find({ userId: req.userId, $or: [{ title: regex }, { content: regex }] }).select('title content type updatedAt')
+        : Promise.resolve([]),
+      hasAccess('tasks')
+        ? Task.find({ userId: req.userId, title: regex }).select('title status dueDate')
+        : Promise.resolve([]),
+      hasAccess('chat')
+        ? Chat.find({ userId: req.userId, $or: [{ title: regex }, { 'messages.content': regex }] }).select('title updatedAt messages')
+        : Promise.resolve([]),
+      hasAccess('vault')
+        ? Vault.find({ userId: req.userId, accountName: regex }).select('accountName updatedAt')
+        : Promise.resolve([])
+    ];
+
+    const [notes, tasks, chats, vault] = await Promise.all(searchPromises);
 
     res.json({
       notes: notes || [],

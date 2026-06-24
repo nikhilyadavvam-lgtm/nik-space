@@ -21,6 +21,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: '⚡',
   },
+  profilePicture: {
+    type: String,
+    default: '',
+  },
+  expoPushToken: {
+    type: String,
+    default: '',
+  },
   role: {
     type: String,
     enum: ['admin', 'user'],
@@ -28,7 +36,7 @@ const userSchema = new mongoose.Schema({
   },
   authorizedModules: {
     type: [String],
-    default: ['notes', 'chat', 'tasks', 'finance', 'vault', 'drive', 'reminders', 'health', 'mess', 'quotes'],
+    default: ['notes', 'chat', 'tasks', 'finance', 'vault', 'drive', 'reminders', 'health', 'mess', 'quotes', 'calls', 'calendar'],
   },
   createdAt: {
     type: Date,

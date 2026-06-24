@@ -56,6 +56,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
 const User = require('./models/User');
+const { sendPushNotification } = require('./utils/pushNotification');
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -131,7 +132,16 @@ io.on('connection', async (socket) => {
           isVideo,
         });
       } else {
-        socket.emit('call:error', { message: 'User is currently offline.' });
+        // Send Expo Push Notification
+        if (receiver.expoPushToken) {
+          sendPushNotification(
+            receiver.expoPushToken,
+            'Missed Call',
+            `Incoming ${isVideo ? 'video' : 'voice'} call from ${caller.name || 'someone'}`,
+            { type: 'call', isVideo, fromUserId: socket.userId }
+          );
+        }
+        socket.emit('call:error', { message: 'User is currently offline. A push notification has been sent.' });
       }
     } catch (err) {
       console.error('Signaling validation error:', err);

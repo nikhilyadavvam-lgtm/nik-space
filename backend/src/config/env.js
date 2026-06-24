@@ -6,6 +6,7 @@ const envSchema = z.object({
   JWT_SECRET:      z.string().min(16, 'JWT_SECRET must be at least 16 chars'),
   CLIENT_URL:      z.string().default('http://localhost:8081'),
   MASTER_KEY:      z.string().min(16, 'MASTER_KEY must be at least 16 chars'),
+  GROQ_API_KEY:    z.string().optional(),
 });
 
 function validateEnv() {

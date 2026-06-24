@@ -16,6 +16,7 @@ const loginSchema = z.object({
 const updateProfileSchema = z.object({
   name: z.string().optional(),
   emoji: z.string().optional(),
+  profilePicture: z.string().optional(),
 });
 
 // Routes (no register — single user, seeded via `npm run seed`)

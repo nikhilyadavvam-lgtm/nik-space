@@ -71,10 +71,11 @@ async function getMe(req, res) {
 }
 async function updateProfile(req, res) {
   try {
-    const { name, emoji } = req.body;
+    const { name, emoji, profilePicture } = req.body;
     const update = {};
     if (name !== undefined) update.name = name;
     if (emoji !== undefined) update.emoji = emoji;
+    if (profilePicture !== undefined) update.profilePicture = profilePicture;
 
     const user = await User.findByIdAndUpdate(req.userId, update, { new: true });
     if (!user) return res.status(404).json({ error: 'User not found' });
