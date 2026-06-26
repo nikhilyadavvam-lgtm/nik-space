@@ -73,6 +73,13 @@ app.set('io', io);
 // Map of online userIds -> { socketId, name, emoji }
 const onlineUsers = new Map();
 
+// Map of sessionId -> { id, status, callerId, receiverId, callerSocketId, receiverSocketId, offer, answer, candidatesQueue: [] }
+const callSessions = new Map();
+
+function getSessionId(userA, userB) {
+  return [userA.toString(), userB.toString()].sort().join('_');
+}
+
 io.use((socket, next) => {
   const token = socket.handshake.auth?.token || socket.handshake.query?.token;
   if (!token) {
@@ -128,14 +135,46 @@ io.on('connection', async (socket) => {
         return;
       }
 
+      const sessionId = getSessionId(socket.userId, toUserId);
+      let session = callSessions.get(sessionId);
+
+      if (session && session.status === 'connected') {
+        console.log(`🔌 WebRTC: Renegotiation / ICE restart initiated for session ${sessionId}`);
+        session.status = 'renegotiating';
+      } else {
+        session = {
+          id: sessionId,
+          status: 'ringing',
+          callerId: socket.userId,
+          receiverId: toUserId,
+          callerSocketId: socket.id,
+          receiverSocketId: null,
+          offer,
+          candidatesQueue: [],
+        };
+        callSessions.set(sessionId, session);
+      }
+
       const target = onlineUsers.get(toUserId);
       if (target) {
-        io.to(target.socketId).emit('call:incoming', {
-          fromUserId: socket.userId,
-          offer,
-          isVideo,
-        });
+        // Direct route lookup for maximum speed / low latency
+        const targetSocket = io.sockets.sockets.get(target.socketId);
+        if (targetSocket) {
+          targetSocket.emit('call:incoming', {
+            fromUserId: socket.userId,
+            offer,
+            isVideo,
+          });
+        } else {
+          io.to(target.socketId).emit('call:incoming', {
+            fromUserId: socket.userId,
+            offer,
+            isVideo,
+          });
+        }
       } else {
+        // Clear session if user is offline
+        callSessions.delete(sessionId);
         // Send Expo Push Notification
         if (receiver.expoPushToken) {
           sendPushNotification(
@@ -154,40 +193,129 @@ io.on('connection', async (socket) => {
   });
 
   socket.on('call:accept', ({ toUserId, answer }) => {
+    const sessionId = getSessionId(socket.userId, toUserId);
+    const session = callSessions.get(sessionId);
+
+    if (!session) {
+      console.warn(`⚠️ Rejected call accept: Session ${sessionId} not found`);
+      return;
+    }
+
+    if (session.status !== 'ringing' && session.status !== 'renegotiating') {
+      console.warn(`⚠️ Rejected call accept: Session state is ${session.status}`);
+      return;
+    }
+
+    session.status = 'connected';
+    session.receiverSocketId = socket.id;
+    session.answer = answer;
+
     const target = onlineUsers.get(toUserId);
     if (target) {
-      io.to(target.socketId).emit('call:accepted', {
-        answer,
+      const targetSocket = io.sockets.sockets.get(target.socketId);
+      if (targetSocket) {
+        targetSocket.emit('call:accepted', { answer });
+      } else {
+        io.to(target.socketId).emit('call:accepted', { answer });
+      }
+    }
+
+    // Flush any buffered candidates now that the remote description can be set safely
+    if (session.candidatesQueue && session.candidatesQueue.length > 0) {
+      console.log(`🔌 WebRTC: Flushing ${session.candidatesQueue.length} buffered candidates for session ${sessionId}`);
+      session.candidatesQueue.forEach((item) => {
+        const itemTarget = onlineUsers.get(item.toUserId);
+        if (itemTarget) {
+          const itemSocket = io.sockets.sockets.get(itemTarget.socketId);
+          if (itemSocket) {
+            itemSocket.emit('call:ice-candidate', { candidate: item.candidate });
+          } else {
+            io.to(itemTarget.socketId).emit('call:ice-candidate', { candidate: item.candidate });
+          }
+        }
       });
+      session.candidatesQueue = [];
     }
   });
 
   socket.on('call:decline', ({ toUserId }) => {
+    const sessionId = getSessionId(socket.userId, toUserId);
+    callSessions.delete(sessionId);
+
     const target = onlineUsers.get(toUserId);
     if (target) {
-      io.to(target.socketId).emit('call:declined');
+      const targetSocket = io.sockets.sockets.get(target.socketId);
+      if (targetSocket) {
+        targetSocket.emit('call:declined');
+      } else {
+        io.to(target.socketId).emit('call:declined');
+      }
     }
   });
 
   socket.on('call:ice-candidate', ({ toUserId, candidate }) => {
+    const sessionId = getSessionId(socket.userId, toUserId);
+    const session = callSessions.get(sessionId);
+
+    if (!session) {
+      console.warn(`⚠️ ICE candidate ignored: Session ${sessionId} not active`);
+      return;
+    }
+
+    // Buffer candidates during the initial ringing phase to prevent race conditions on slow peers
+    if (session.status === 'ringing') {
+      console.log(`🔌 WebRTC: Buffering ICE candidate for session ${sessionId}`);
+      session.candidatesQueue.push({ toUserId, candidate });
+      return;
+    }
+
     const target = onlineUsers.get(toUserId);
     if (target) {
-      io.to(target.socketId).emit('call:ice-candidate', {
-        candidate,
-      });
+      const targetSocket = io.sockets.sockets.get(target.socketId);
+      if (targetSocket) {
+        targetSocket.emit('call:ice-candidate', { candidate });
+      } else {
+        io.to(target.socketId).emit('call:ice-candidate', { candidate });
+      }
     }
   });
 
   socket.on('call:hangup', ({ toUserId }) => {
+    const sessionId = getSessionId(socket.userId, toUserId);
+    callSessions.delete(sessionId);
+
     const target = onlineUsers.get(toUserId);
     if (target) {
-      io.to(target.socketId).emit('call:hangup');
+      const targetSocket = io.sockets.sockets.get(target.socketId);
+      if (targetSocket) {
+        targetSocket.emit('call:hangup');
+      } else {
+        io.to(target.socketId).emit('call:hangup');
+      }
     }
   });
 
   socket.on('disconnect', () => {
     console.log(`🔌 WebRTC: User disconnected ${socket.userId}`);
     onlineUsers.delete(socket.userId);
+
+    // Clean up all active sessions containing this user
+    for (const [sessionId, session] of callSessions.entries()) {
+      if (session.callerId === socket.userId || session.receiverId === socket.userId) {
+        const peerId = session.callerId === socket.userId ? session.receiverId : session.callerId;
+        const target = onlineUsers.get(peerId);
+        if (target) {
+          const targetSocket = io.sockets.sockets.get(target.socketId);
+          if (targetSocket) {
+            targetSocket.emit('call:hangup');
+          } else {
+            io.to(target.socketId).emit('call:hangup');
+          }
+        }
+        callSessions.delete(sessionId);
+        console.log(`🔌 WebRTC: Cleaned up session ${sessionId} due to user disconnect`);
+      }
+    }
 
     // Broadcast updated presence list
     const presenceList = Array.from(onlineUsers.entries()).map(([id, data]) => ({
@@ -198,6 +326,7 @@ io.on('connection', async (socket) => {
     }));
     io.emit('presence-update', presenceList);
   });
+
 });
 
 connectDB().then(() => {

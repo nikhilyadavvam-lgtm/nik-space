@@ -1,5 +1,6 @@
 const Chat = require('../models/Chat');
 const User = require('../models/User');
+const { sendPushNotification } = require('../utils/pushNotification');
 
 const IMAGE_CONTENT_PREFIX = '[Image]: ';
 
@@ -21,6 +22,12 @@ function emitChatDeleted(req, userId, chatId) {
   const io = req.app.get('io');
   if (!io || !userId || !chatId) return;
   io.to(`user:${userId.toString()}`).emit('chat:deleted', { chatId: chatId.toString() });
+}
+
+function buildMessagePreview(content, imageUrl) {
+  if (imageUrl && !content) return 'Photo';
+  if (imageUrl) return content ? `${content.slice(0, 80)} ? Photo` : 'Photo';
+  return content?.slice(0, 120) || 'New message';
 }
 
 // GET /api/chats — list all threads (without full messages)
@@ -127,6 +134,17 @@ async function addMessage(req, res) {
         mirrorChat.updatedAt = new Date();
         await mirrorChat.save();
         emitChatUpdated(req, recipient._id, mirrorChat, 'message-added');
+        await sendPushNotification(
+          recipient.expoPushToken,
+          sender.name || 'New message',
+          buildMessagePreview(messageContent, imageUrl),
+          {
+            type: 'chat',
+            chatId: mirrorChat._id.toString(),
+            senderId: sender._id.toString(),
+          },
+          { channelId: 'messages' }
+        );
       }
     }
 

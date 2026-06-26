@@ -9,8 +9,8 @@
  * @param {string} body - Body content of the notification.
  * @param {object} [data] - Optional metadata payload.
  */
-async function sendPushNotification(expoPushToken, title, body, data = {}) {
-  if (!expoPushToken || !expoPushToken.startsWith('ExponentPushToken')) {
+async function sendPushNotification(expoPushToken, title, body, data = {}, options = {}) {
+  if (!expoPushToken || !/^Expo(nent)?PushToken/.test(expoPushToken)) {
     console.log('📢 Push notification skipped: No valid Expo Push Token registered for user');
     return null;
   }
@@ -21,7 +21,11 @@ async function sendPushNotification(expoPushToken, title, body, data = {}) {
     title,
     body,
     data,
+    priority: options.priority || 'high',
+    channelId: options.channelId,
   };
+
+  Object.keys(payload).forEach((key) => payload[key] === undefined && delete payload[key]);
 
   try {
     const response = await fetch('https://exp.host/--/api/v2/push/send', {
