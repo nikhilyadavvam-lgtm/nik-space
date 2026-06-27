@@ -1,4 +1,5 @@
 const Quote = require('../models/Quote');
+const ImageQuote = require('../models/ImageQuote');
 
 // GET /api/quotes
 async function getQuotes(req, res) {
@@ -58,4 +59,50 @@ async function deleteQuote(req, res) {
   }
 }
 
-module.exports = { getQuotes, createQuote, updateQuote, deleteQuote };
+// GET /api/quotes/images
+async function getImageQuotes(req, res) {
+  try {
+    const images = await ImageQuote.find({ userId: req.userId }).sort({ createdAt: -1 });
+    res.json(images);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch image quotes' });
+  }
+}
+
+// POST /api/quotes/images
+async function createImageQuote(req, res) {
+  try {
+    const { imageUrl, title } = req.body;
+    if (!imageUrl) return res.status(400).json({ error: 'Image URL is required' });
+
+    const imageQuote = await ImageQuote.create({
+      userId: req.userId,
+      imageUrl,
+      title: title || ''
+    });
+    res.status(201).json(imageQuote);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create image quote' });
+  }
+}
+
+// DELETE /api/quotes/images/:id
+async function deleteImageQuote(req, res) {
+  try {
+    const imageQuote = await ImageQuote.findOneAndDelete({ _id: req.params.id, userId: req.userId });
+    if (!imageQuote) return res.status(404).json({ error: 'Image quote not found' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete image quote' });
+  }
+}
+
+module.exports = {
+  getQuotes,
+  createQuote,
+  updateQuote,
+  deleteQuote,
+  getImageQuotes,
+  createImageQuote,
+  deleteImageQuote
+};
